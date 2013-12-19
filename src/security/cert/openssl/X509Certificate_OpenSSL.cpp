@@ -384,11 +384,7 @@ bool X509Certificate_OpenSSL::verifyHostName(const string& hostname) const
 
 		if (strcmp(extStr, "subjectAltName") == 0)
 		{
-#ifdef _WIN32
 			X509V3_EXT_METHOD* method;
-#else
-			const X509V3_EXT_METHOD* method;
-#endif
 
 			if ((method = X509V3_EXT_get(ext)) != NULL)
 			{
