@@ -48,8 +48,11 @@ public:
 	  */
 	static parsingContext& getDefaultContext();
 
-protected:
+	bool getRetryOnCharsetMismatch() const;
+	void setRetryOnCharsetMismatch(bool);
 
+protected:
+	bool m_retryOnCharsetMismatch;	
 };
 
 

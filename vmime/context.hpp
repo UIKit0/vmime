@@ -28,6 +28,7 @@
 #include "vmime/base.hpp"
 #include "vmime/charsetConverterOptions.hpp"
 
+#include <set>
 
 namespace vmime
 {
@@ -71,6 +72,13 @@ public:
 	  */
 	void setCharsetConversionOptions(const charsetConverterOptions& opts);
 
+
+	const std::string& getDefaultCharset() const;
+	void setDefaultCharset(const std::string& ch);
+
+	void setOverrideCharsets(const std::set<std::string>& chs);
+	const std::set<std::string>& getOverrideCharsets() const;
+
 	/** Switches between contexts temporarily.
 	  */
 	template <typename CTX_CLASS>
@@ -113,6 +121,9 @@ protected:
 
 	bool m_internationalizedEmail;
 	charsetConverterOptions m_charsetConvOptions;
+
+  std::string m_defaultCharset;
+  std::set<std::string> m_overrideCharsets;
 };
 
 

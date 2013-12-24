@@ -216,11 +216,14 @@ public:
 	void generateIn(shared_ptr <bodyPart> message, shared_ptr <bodyPart> parent) const;
 	void parse(shared_ptr <const bodyPart> message, shared_ptr <const bodyPart> parent, shared_ptr <const bodyPart> textPart);
 
+	bool hasCharset() const;
+
 private:
 
 	shared_ptr <contentHandler> m_plainText;
 	shared_ptr <contentHandler> m_text;
 	charset m_charset;
+	bool m_hasCharset;
 
 	std::vector <shared_ptr <embeddedObject> > m_objects;
 

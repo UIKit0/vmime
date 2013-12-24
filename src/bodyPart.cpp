@@ -22,7 +22,8 @@
 //
 
 #include "vmime/bodyPart.hpp"
-
+#include "vmime/contentTypeField.hpp"
+#include "vmime/utility/stringUtils.hpp"
 
 namespace vmime
 {
@@ -44,6 +45,29 @@ void bodyPart::parseImpl
 	// Parse the headers
 	size_t pos = position;
 	m_header->parse(ctx, parser, pos, end, &pos);
+
+  // Retry with a different default charset
+	if (ctx.getRetryOnCharsetMismatch())
+	{
+		shared_ptr <const contentTypeField> ctf = m_header->findField <contentTypeField>(fields::CONTENT_TYPE);
+		if (ctf)
+		{
+			const mediaType ctfType = *ctf->getValue <mediaType>();
+			if (ctfType.getType() == mediaTypes::TEXT && ctf->hasCharset())
+			{
+				const std::set<std::string>& overrideCharsets = ctx.getOverrideCharsets();
+				if (overrideCharsets.find(utility::stringUtils::toLower(ctf->getCharset().getName())) == overrideCharsets.end()
+					&&!utility::stringUtils::isStringEqualNoCase(ctf->getCharset().getName(), ctx.getDefaultCharset()))
+				{
+					parsingContext nctx(ctx);
+					nctx.setDefaultCharset(ctf->getCharset().getName());
+					nctx.setRetryOnCharsetMismatch(false);
+					pos = position;
+					m_header->parse(nctx, parser, pos, end, &pos);
+				}
+			}
+		}
+	}
 
 	// Parse the body contents
 	m_body->parse(ctx, parser, pos, end, NULL);

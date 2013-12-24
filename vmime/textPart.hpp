@@ -103,6 +103,8 @@ public:
 	  * @param textPart actual text part
 	  */
 	virtual void parse(shared_ptr <const bodyPart> message, shared_ptr <const bodyPart> parent, shared_ptr <const bodyPart> textPart) = 0;
+
+	virtual bool hasCharset() const = 0;
 };
 
 

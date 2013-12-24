@@ -36,7 +36,9 @@ context::context()
 
 context::context(const context& ctx)
 	: object(),
-	  m_internationalizedEmail(ctx.m_internationalizedEmail)
+	  m_internationalizedEmail(ctx.m_internationalizedEmail),
+		m_defaultCharset(ctx.m_defaultCharset),
+		m_overrideCharsets(ctx.m_overrideCharsets)
 {
 }
 
@@ -81,7 +83,32 @@ void context::copyFrom(const context& ctx)
 {
 	m_internationalizedEmail = ctx.m_internationalizedEmail;
 	m_charsetConvOptions = ctx.m_charsetConvOptions;
+	m_defaultCharset = ctx.m_defaultCharset;
+	m_overrideCharsets = ctx.m_overrideCharsets;
 }
 
+
+const std::string& context::getDefaultCharset() const
+{
+	return m_defaultCharset;
+}
+
+
+void context::setDefaultCharset(const std::string& ch)
+{
+	m_defaultCharset = ch;
+}
+
+
+const std::set<std::string>& context::getOverrideCharsets() const
+{
+	return m_overrideCharsets;
+}
+
+
+void context::setOverrideCharsets(const std::set<std::string>& chs)
+{
+	m_overrideCharsets = chs;
+}
 
 } // vmime

@@ -87,7 +87,7 @@ shared_ptr <word> word::parseNext
 	size_t startPos = pos;
 	string unencoded;
 
-	const charset defaultCharset = ctx.getInternationalizedEmailSupport()
+	const charset defaultCharset = !ctx.getDefaultCharset().empty()? charset(ctx.getDefaultCharset()): ctx.getInternationalizedEmailSupport()
 		? charset(charsets::UTF_8) : charset(charsets::US_ASCII);
 
 	while (pos < end)
@@ -307,6 +307,16 @@ void word::parseImpl
 
 						m_buffer = decodedBuffer;
 						m_charset = charset(string(charsetPos, charsetEnd));
+
+						//Override charset
+						if (! ctx.getDefaultCharset().empty())
+						{
+							const std::set<std::string>& overrideCharsets = ctx.getOverrideCharsets();
+							if (overrideCharsets.find(utility::stringUtils::toLower(m_charset.getName())) != overrideCharsets.end())
+							{
+								m_charset = charset(ctx.getDefaultCharset());
+							}
+						}
 
 						setParsedBounds(position, p - buffer.begin());
 

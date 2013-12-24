@@ -29,12 +29,13 @@ namespace vmime
 
 
 parsingContext::parsingContext()
+	:m_retryOnCharsetMismatch(false)
 {
 }
 
 
 parsingContext::parsingContext(const parsingContext& ctx)
-	: context(ctx)
+	: context(ctx), m_retryOnCharsetMismatch(ctx.m_retryOnCharsetMismatch)
 {
 }
 
@@ -43,6 +44,18 @@ parsingContext& parsingContext::getDefaultContext()
 {
 	static parsingContext ctx;
 	return ctx;
+}
+
+
+bool parsingContext::getRetryOnCharsetMismatch() const
+{
+	return m_retryOnCharsetMismatch;
+}
+
+
+void parsingContext::setRetryOnCharsetMismatch(bool f)
+{
+	m_retryOnCharsetMismatch = f;
 }
 
 

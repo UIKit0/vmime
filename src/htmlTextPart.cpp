@@ -40,7 +40,8 @@ namespace vmime
 
 htmlTextPart::htmlTextPart()
 	: m_plainText(make_shared <emptyContentHandler>()),
-	  m_text(make_shared <emptyContentHandler>())
+	  m_text(make_shared <emptyContentHandler>()),
+		m_hasCharset(false)
 {
 }
 
@@ -198,8 +199,10 @@ void htmlTextPart::parse(shared_ptr <const bodyPart> message, shared_ptr <const 
 	shared_ptr <const contentTypeField> ctf =
 		textPart->getHeader()->findField <contentTypeField>(fields::CONTENT_TYPE);
 
-	if (ctf && ctf->hasCharset())
+	if (ctf && ctf->hasCharset()) {
 		m_charset = ctf->getCharset();
+		m_hasCharset = true;
+  }
 	else
 		m_charset = charset();
 
@@ -335,6 +338,10 @@ void htmlTextPart::setCharset(const charset& ch)
 	m_charset = ch;
 }
 
+bool htmlTextPart::hasCharset() const
+{
+	return m_hasCharset;
+}
 
 shared_ptr <const contentHandler> htmlTextPart::getPlainText() const
 {
