@@ -29,13 +29,13 @@ namespace vmime
 
 
 parsingContext::parsingContext()
-	:m_retryOnCharsetMismatch(false)
+	:m_retryOnCharsetMismatch(false), m_emailAddressOptional(false)
 {
 }
 
 
 parsingContext::parsingContext(const parsingContext& ctx)
-	: context(ctx), m_retryOnCharsetMismatch(ctx.m_retryOnCharsetMismatch)
+	: context(ctx), m_retryOnCharsetMismatch(ctx.m_retryOnCharsetMismatch), m_emailAddressOptional(ctx.m_emailAddressOptional)
 {
 }
 
@@ -57,6 +57,18 @@ void parsingContext::setRetryOnCharsetMismatch(bool f)
 {
 	m_retryOnCharsetMismatch = f;
 }
+
+bool parsingContext::getEmailAddressOptional() const
+{
+	return m_emailAddressOptional;
+}
+
+
+void parsingContext::setEmailAddressOptional(bool f)
+{
+	m_emailAddressOptional = f;
+}
+
 
 
 } // vmime

@@ -313,7 +313,7 @@ void mailbox::parseImpl
 
 	// Swap name and address when no address was found
 	// (email address is mandatory, whereas name is optional).
-	if (address.empty() && !name.empty() && !hadBrackets)
+	if (address.empty() && !name.empty() && !hadBrackets && !ctx.getEmailAddressOptional())
 	{
 		m_name.removeAllWords();
 		m_email.parse(ctx, name);
@@ -321,7 +321,7 @@ void mailbox::parseImpl
 	else
 	{
 		text::decodeAndUnfold(ctx, name, &m_name);
-		m_email.parse(ctx, address);
+		if (!address.empty()) m_email.parse(ctx, address);
 	}
 
 	setParsedBounds(position, position + (p - pstart));

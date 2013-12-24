@@ -51,8 +51,12 @@ public:
 	bool getRetryOnCharsetMismatch() const;
 	void setRetryOnCharsetMismatch(bool);
 
+	bool getEmailAddressOptional() const;
+	void setEmailAddressOptional(bool);
+
 protected:
 	bool m_retryOnCharsetMismatch;	
+	bool m_emailAddressOptional;	
 };
 
 
