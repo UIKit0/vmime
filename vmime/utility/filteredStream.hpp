@@ -236,7 +236,7 @@ public:
 		m_stream.reset();
 	}
 
-	size_t read(byte_t* const data, const size_t count);
+	inline size_t read(byte_t* const data, const size_t count);
 
 	size_t skip(const size_t /* count */)
 	{
@@ -261,7 +261,7 @@ size_t stopSequenceFilteredInputStream <1>::read
 
 
 template <int COUNT>
-size_t stopSequenceFilteredInputStream <COUNT>::read
+inline size_t stopSequenceFilteredInputStream <COUNT>::read
 	(byte_t* const data, const size_t count)
 {
 	// Read buffer must be at least 'COUNT' size + 1 byte
