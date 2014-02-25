@@ -25,6 +25,8 @@
 #include <sstream>
 #include <vector>
 #include <map>
+#include <locale>
+#include <clocale>
 
 #include "vmime/vmime.hpp"
 #include "vmime/platforms/posix/posixHandler.hpp"
@@ -288,6 +290,53 @@ static std::ostream& operator<<(std::ostream& os, const vmime::exception& e)
 }
 
 
+/** Time out handler.
+  * Used to stop the current operation after too much time, or if the user
+  * requested cancellation.
+  */
+class timeoutHandler : public vmime::net::timeoutHandler
+{
+public:
+
+	bool isTimeOut()
+	{
+		// This is a cancellation point: return true if you want to cancel
+		// the current operation. If you return true, handleTimeOut() will
+		// be called just after this, and before actually cancelling the
+		// operation
+		return false;
+	}
+
+	void resetTimeOut()
+	{
+		// Called at the beginning of an operation (eg. connecting,
+		// a read() or a write() on a socket...)
+	}
+
+	bool handleTimeOut()
+	{
+		// If isTimeOut() returned true, this function will be called. This
+		// allows you to interact with the user, ie. display a prompt to
+		// know whether he wants to cancel the operation.
+
+		// If you return true here, the operation will be actually cancelled.
+		// If not, the time out is reset and the operation continues.
+		return true;
+	}
+};
+
+
+class timeoutHandlerFactory : public vmime::net::timeoutHandlerFactory
+{
+public:
+
+	vmime::shared_ptr <vmime::net::timeoutHandler> create()
+	{
+		return vmime::make_shared <timeoutHandler>();
+	}
+};
+
+
 /** Print the MIME structure of a message on the standard output.
   *
   * @param s structure object
@@ -404,6 +453,9 @@ static void sendMessage()
 		// Enable TLS support if available
 		tr->setProperty("connection.tls", true);
 
+		// Set the time out handler
+		tr->setTimeoutHandlerFactory(vmime::make_shared <timeoutHandlerFactory>());
+
 		// Set the object responsible for verifying certificates, in the
 		// case a secured connection is used (TLS/SSL)
 		tr->setCertificateVerifier
@@ -518,6 +570,9 @@ static void connectStore()
 		// Enable TLS support if available
 		st->setProperty("connection.tls", true);
 
+		// Set the time out handler
+		st->setTimeoutHandlerFactory(vmime::make_shared <timeoutHandlerFactory>());
+
 		// Set the object responsible for verifying certificates, in the
 		// case a secured connection is used (TLS/SSL)
 		st->setCertificateVerifier
@@ -560,9 +615,12 @@ static void connectStore()
 				choices.push_back("Show message header");
 				choices.push_back("Show message envelope");
 				choices.push_back("Extract whole message");
+				choices.push_back("Extract attachments");
 				choices.push_back("Status");
 				choices.push_back("List folders");
 				choices.push_back("Change folder");
+				choices.push_back("Add message (to the current folder)");
+				choices.push_back("Copy message (into the current folder)");
 				choices.push_back("Return to main menu");
 
 				const int choice = printMenu(choices);
@@ -570,7 +628,8 @@ static void connectStore()
 				// Request message number
 				vmime::shared_ptr <vmime::net::message> msg;
 
-				if (choice != 6 && choice != 7 && choice != 8)
+				if (choice == 1 || choice == 2 || choice == 3 || choice == 4 ||
+				    choice == 5 || choice == 6 || choice == 11)
 				{
 					std::cout << "Enter message number: ";
 					std::cout.flush();
@@ -583,7 +642,7 @@ static void connectStore()
 					int num = 0;
 					iss >> num;
 
-					if (num < 1 || num > count)
+					if (num < 1 || num > f->getMessageCount())
 					{
 						std::cerr << "Invalid message number." << std::endl;
 						continue;
@@ -666,8 +725,72 @@ static void connectStore()
 
 					break;
 				}
-				// Status
+				// Extract attachments
 				case 6:
+				{
+					vmime::shared_ptr <vmime::message> parsedMsg = msg->getParsedMessage();
+
+					std::vector <vmime::shared_ptr <const vmime::attachment> > attchs = 
+						vmime::attachmentHelper::findAttachmentsInMessage(parsedMsg);
+
+					if (attchs.size() > 0)
+					{
+						std::cout << attchs.size() << " attachments found." << std::endl;
+
+						for (std::vector <vmime::shared_ptr <const vmime::attachment> >::iterator
+						     it = attchs.begin() ; it != attchs.end() ; ++it)
+						{
+							vmime::shared_ptr <const vmime::attachment> att = *it;
+
+							// Get attachment size
+							vmime::size_t size = 0;
+
+							if (att->getData()->isEncoded())
+								size = att->getData()->getEncoding().getEncoder()->getDecodedSize(att->getData()->getLength());
+							else
+								size = att->getData()->getLength();
+
+							std::cout << "Found attachment '" << att->getName().getBuffer() << "'"
+							          << ", size is " << size << " bytes:" << std::endl;
+
+							// Get attachment data
+							std::cout << std::endl;
+							std::cout << "========== BEGIN CONTENT ==========" << std::endl;
+
+							vmime::utility::outputStreamAdapter osa(std::cout);
+							att->getData()->extract(osa);
+
+							std::cout << std::endl;
+							std::cout << "========== END CONTENT ==========" << std::endl;
+
+							// Or write it to a file
+							/*
+							vmime::shared_ptr <vmime::utility::fileSystemFactory> fsf
+								= vmime::platform::getHandler()->getFileSystemFactory();
+
+							vmime::shared_ptr <vmime::utility::file> file
+								= fsf->create(vmime::utility::path::fromString
+									("/path/to/attachment-file", "/", vmime::charsets::UTF_8));
+							// -or- ("C:\\Temp\\attachment-file", "\\", vmime::charsets::UTF_8));
+
+							file->createFile();
+
+							vmime::shared_ptr <vmime::utility::outputStream> output =
+								file->getFileWriter()->getOutputStream();
+
+							att->getData()->extract(*output.get());
+							*/
+						}
+					}
+					else
+					{
+						std::cout << "No attachments found." << std::endl;
+					}
+
+					break;
+				}
+				// Status
+				case 7:
 				{
 					int count, unseen;
 					f->status(count, unseen);
@@ -676,7 +799,7 @@ static void connectStore()
 					break;
 				}
 				// List folders
-				case 7:
+				case 8:
 				{
 					vmime::shared_ptr <vmime::net::folder>
 						root = st->getRootFolder();
@@ -685,7 +808,7 @@ static void connectStore()
 					break;
 				}
 				// Change folder
-				case 8:
+				case 9:
 				{
 					std::cout << "Enter folder path (eg. /root/subfolder):" << std::endl;
 					std::cout.flush();
@@ -722,8 +845,91 @@ static void connectStore()
 
 					break;
 				}
+				// Add message
+				case 10:
+				{
+					vmime::messageBuilder mb;
+
+					mb.setExpeditor(vmime::mailbox("me@somewhere.com"));
+
+					vmime::addressList to;
+					to.appendAddress(vmime::make_shared <vmime::mailbox>("you@elsewhere.com"));
+					mb.setRecipients(to);
+
+					mb.setSubject(vmime::text("Test message from VMime example6"));
+					mb.getTextPart()->setText(vmime::make_shared <vmime::stringContentHandler>(
+						"Body of test message from VMime example6."));
+
+					vmime::shared_ptr <vmime::message> msg = mb.construct();
+
+					vmime::net::messageSet set = f->addMessage(msg);
+
+					if (set.isEmpty())
+					{
+						std::cout << "Message has successfully been added, "
+						          << "but its UID/number is not known." << std::endl;
+					}
+					else
+					{
+						const vmime::net::messageRange& range = set.getRangeAt(0);
+
+						if (set.isUIDSet())
+						{
+							const vmime::net::message::uid uid =
+								dynamic_cast <const vmime::net::UIDMessageRange&>(range).getFirst();
+
+							std::cout << "Message has successfully been added, "
+							          << "its UID is '" << uid << "'." << std::endl;
+						}
+						else
+						{
+							const int number =
+								dynamic_cast <const vmime::net::numberMessageRange&>(range).getFirst();
+
+							std::cout << "Message has successfully been added, "
+							          << "its number is '" << number << "'." << std::endl;
+						}
+					}
+
+					break;
+				}
+				// Copy message
+				case 11:
+				{
+					vmime::net::messageSet set = f->copyMessages(f->getFullPath(),
+						vmime::net::messageSet::byNumber(msg->getNumber()));
+
+					if (set.isEmpty())
+					{
+						std::cout << "Message has successfully been copied, "
+						          << "but its UID/number is not known." << std::endl;
+					}
+					else
+					{
+						const vmime::net::messageRange& range = set.getRangeAt(0);
+
+						if (set.isUIDSet())
+						{
+							const vmime::net::message::uid uid =
+								dynamic_cast <const vmime::net::UIDMessageRange&>(range).getFirst();
+
+							std::cout << "Message has successfully been copied, "
+							          << "its UID is '" << uid << "'." << std::endl;
+						}
+						else
+						{
+							const int number =
+								dynamic_cast <const vmime::net::numberMessageRange&>(range).getFirst();
+
+							std::cout << "Message has successfully been copied, "
+							          << "its number is '" << number << "'." << std::endl;
+						}
+					}
+
+					break;
+				}
 				// Main menu
-				case 9:
+				case 12:
 
 					f->close(true);  // 'true' to expunge deleted messages
 					cont = false;
@@ -831,8 +1037,16 @@ static bool menu()
 
 int main()
 {
-	// VMime initialization
-	vmime::platform::setHandler<vmime::platforms::posix::posixHandler>();
+	// Set the global C and C++ locale to the user-configured locale.
+	// The locale should use UTF-8 encoding for these tests to run successfully.
+	try
+	{
+		std::locale::global(std::locale(""));
+	}
+	catch (std::exception &)
+	{
+		std::setlocale(LC_ALL, "");
+	}
 
 	for (bool quit = false ; !quit ; )
 	{
