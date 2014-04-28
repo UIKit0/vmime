@@ -1,6 +1,6 @@
 //
 // VMime library (http://www.vmime.org)
-// Copyright (C) 2002-2013 Vincent Richard <vincent@vmime.org>
+// Copyright (C) 2002-2014 Vincent Richard <vincent@vmime.org>
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License as
@@ -21,53 +21,58 @@
 // the GNU General Public License cover the whole combination.
 //
 
-#include "vmime/utility/progressListener.hpp"
+#include "vmime/config.hpp"
+
+
+#if VMIME_HAVE_MESSAGING_FEATURES
+
+
+#include "vmime/net/defaultTimeoutHandler.hpp"
 
 
 namespace vmime {
-namespace utility {
+namespace net {
 
 
-// progressListenerSizeAdapter
+defaultTimeoutHandler::defaultTimeoutHandler()
+{
+	m_startTime = time(NULL);
+}
 
-progressListenerSizeAdapter::progressListenerSizeAdapter
-	(progressListener* list, const size_t total)
-	: m_wrapped(list), m_total(total)
+
+defaultTimeoutHandler::~defaultTimeoutHandler()
 {
 }
 
 
-void progressListenerSizeAdapter::start(const size_t predictedTotal)
+bool defaultTimeoutHandler::isTimeOut()
 {
-	if (m_wrapped)
-		m_wrapped->start(predictedTotal);
+	return time(NULL) - m_startTime >= 30;
 }
 
 
-void progressListenerSizeAdapter::progress(const size_t current, const size_t currentTotal)
+void defaultTimeoutHandler::resetTimeOut()
 {
-	if (m_wrapped)
-	{
-		if (currentTotal > m_total)
-			m_total = currentTotal;
-
-		m_wrapped->progress(current, m_total);
-	}
+	m_startTime = time(NULL);
 }
 
 
-void progressListenerSizeAdapter::stop(const size_t total)
+bool defaultTimeoutHandler::handleTimeOut()
 {
-	if (m_wrapped)
-	{
-		if (total > m_total)
-			m_total = total;
-
-		m_wrapped->stop(m_total);
-	}
+	return false;
 }
 
 
-} // utility
+
+
+shared_ptr <timeoutHandler> defaultTimeoutHandlerFactory::create()
+{
+	return make_shared <defaultTimeoutHandler>();
+}
+
+
+} // net
 } // vmime
 
+
+#endif // VMIME_HAVE_MESSAGING_FEATURES

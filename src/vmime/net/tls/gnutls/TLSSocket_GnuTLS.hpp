@@ -56,7 +56,7 @@ public:
 
 	void handshake();
 
-	shared_ptr <security::cert::certificateChain> getPeerCertificates() const;
+	shared_ptr <security::cert::certificateChain> getPeerCertificates();
 
 	// Implementation of 'socket'
 	void connect(const string& address, const port_t port);
@@ -83,6 +83,9 @@ public:
 
 	shared_ptr <timeoutHandler> getTimeoutHandler();
 
+	void setTracer(shared_ptr <net::tracer> tracer);
+	shared_ptr <net::tracer> getTracer();
+
 private:
 
 	void internalThrow();
@@ -90,9 +93,11 @@ private:
 #ifdef LIBGNUTLS_VERSION
 	static ssize_t gnutlsPushFunc(gnutls_transport_ptr trspt, const void* data, size_t len);
 	static ssize_t gnutlsPullFunc(gnutls_transport_ptr trspt, void* data, size_t len);
+	static int gnutlsErrnoFunc(gnutls_transport_ptr trspt);
 #else
 	static int gnutlsPushFunc(void* trspt, const void* data, size_t len);
 	static int gnutlsPullFunc(void* trspt, void* data, size_t len);
+	static int gnutlsErrnoFunc(void* trspt);
 #endif // LIBGNUTLS_VERSION
 
 
@@ -106,6 +111,7 @@ private:
 	exception* m_ex;
 
 	unsigned int m_status;
+	int m_errno;
 };
 
 

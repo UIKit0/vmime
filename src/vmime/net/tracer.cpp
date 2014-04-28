@@ -1,6 +1,6 @@
 //
 // VMime library (http://www.vmime.org)
-// Copyright (C) 2002-2013 Vincent Richard <vincent@vmime.org>
+// Copyright (C) 2002-2014 Vincent Richard <vincent@vmime.org>
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License as
@@ -21,53 +21,52 @@
 // the GNU General Public License cover the whole combination.
 //
 
-#include "vmime/utility/progressListener.hpp"
+#include "vmime/config.hpp"
+
+
+#if VMIME_HAVE_MESSAGING_FEATURES
+
+
+#include "tracer.hpp"
+
+
+#include <sstream>
 
 
 namespace vmime {
-namespace utility {
+namespace net {
 
 
-// progressListenerSizeAdapter
-
-progressListenerSizeAdapter::progressListenerSizeAdapter
-	(progressListener* list, const size_t total)
-	: m_wrapped(list), m_total(total)
+void tracer::traceReceiveBytes(const size_t count, const string& state)
 {
+	std::ostringstream oss;
+	oss << "{...";
+
+	if (!state.empty())
+		oss << state << ": ";
+
+	oss << count << " bytes of data...}";
+
+	traceReceive(oss.str());
 }
 
 
-void progressListenerSizeAdapter::start(const size_t predictedTotal)
+void tracer::traceSendBytes(const size_t count, const string& state)
 {
-	if (m_wrapped)
-		m_wrapped->start(predictedTotal);
+	std::ostringstream oss;
+	oss << "{...";
+
+	if (!state.empty())
+		oss << state << ": ";
+
+	oss << count << " bytes of data...}";
+
+	traceSend(oss.str());
 }
 
 
-void progressListenerSizeAdapter::progress(const size_t current, const size_t currentTotal)
-{
-	if (m_wrapped)
-	{
-		if (currentTotal > m_total)
-			m_total = currentTotal;
-
-		m_wrapped->progress(current, m_total);
-	}
-}
-
-
-void progressListenerSizeAdapter::stop(const size_t total)
-{
-	if (m_wrapped)
-	{
-		if (total > m_total)
-			m_total = total;
-
-		m_wrapped->stop(m_total);
-	}
-}
-
-
-} // utility
+} // net
 } // vmime
 
+
+#endif // VMIME_HAVE_MESSAGING_FEATURES

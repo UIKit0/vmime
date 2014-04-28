@@ -49,6 +49,7 @@
 
 #include "vmime/net/timeoutHandler.hpp"
 #include "vmime/net/socket.hpp"
+#include "vmime/net/tracer.hpp"
 
 #include "vmime/net/imap/IMAPTag.hpp"
 
@@ -237,21 +238,57 @@ class VMIME_EXPORT IMAPParser : public object
 {
 public:
 
-	IMAPParser(weak_ptr <IMAPTag> tag, weak_ptr <socket> sok, weak_ptr <timeoutHandler> _timeoutHandler)
-		: m_tag(tag), m_socket(sok), m_progress(NULL), m_strict(false),
-		  m_literalHandler(NULL), m_timeoutHandler(_timeoutHandler)
+	IMAPParser()
+		: m_tag(), m_socket(), m_progress(NULL), m_strict(false),
+		  m_literalHandler(NULL), m_timeoutHandler()
 	{
 	}
 
 
+	/** Set the tag currently used by this parser.
+	  *
+	  * @param tag IMAP command tag
+	  */
+	void setTag(shared_ptr <IMAPTag> tag)
+	{
+		m_tag = tag;
+	}
+
+	/** Return the tag currently used by this parser.
+	  *
+	  * @return IMAP command tag
+	  */
 	shared_ptr <const IMAPTag> getTag() const
 	{
 		return m_tag.lock();
 	}
 
+	/** Set the socket currently used by this parser to receive data
+	  * from server.
+	  *
+	  * @param sok socket
+	  */
 	void setSocket(shared_ptr <socket> sok)
 	{
 		m_socket = sok;
+	}
+
+	/** Set the timeout handler currently used by this parser.
+	  *
+	  * @param toh timeout handler
+	  */
+	void setTimeoutHandler(shared_ptr <timeoutHandler> toh)
+	{
+		m_timeoutHandler = toh;
+	}
+
+	/** Set the tracer currently used by this parser.
+	  *
+	  * @param tr tracer
+	  */
+	void setTracer(shared_ptr <tracer> tr)
+	{
+		m_tracer = tr;
 	}
 
 	/** Set whether we operate in strict mode (this may not work
@@ -2165,6 +2202,16 @@ public:
 	//
 
 	DECLARE_COMPONENT(status_att_val)
+
+		status_att_val()
+			: m_value(NULL)
+		{
+		}
+
+		~status_att_val()
+		{
+			delete m_value;
+		}
 
 		bool parseImpl(IMAPParser& parser, string& line, size_t* currentPos)
 		{
@@ -5650,6 +5697,7 @@ private:
 
 	weak_ptr <IMAPTag> m_tag;
 	weak_ptr <socket> m_socket;
+	shared_ptr <tracer> m_tracer;
 
 	utility::progressListener* m_progress;
 
@@ -5693,6 +5741,13 @@ public:
 #if DEBUG_RESPONSE
 		std::cout << std::endl << "Read line:" << std::endl << line << std::endl;
 #endif
+
+		if (m_tracer)
+		{
+			string::size_type len = line.length();
+			while (len != 0 && (line[len - 1] == '\r' || line[len - 1] == '\n')) --len;
+			m_tracer->traceReceive(line.substr(0, len));
+		}
 
 		return (line);
 	}
@@ -5822,6 +5877,9 @@ public:
 			if (m_progress)
 				m_progress->progress(len, count);
 		}
+
+		if (m_tracer)
+			m_tracer->traceReceiveBytes(count);
 
 		if (m_progress)
 			m_progress->stop(count);

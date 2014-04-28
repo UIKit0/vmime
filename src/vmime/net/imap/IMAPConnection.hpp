@@ -33,6 +33,7 @@
 
 #include "vmime/net/socket.hpp"
 #include "vmime/net/timeoutHandler.hpp"
+#include "vmime/net/tracer.hpp"
 #include "vmime/net/session.hpp"
 #include "vmime/net/connectionInfos.hpp"
 
@@ -48,6 +49,7 @@ namespace imap {
 
 class IMAPTag;
 class IMAPStore;
+class IMAPCommand;
 
 
 class VMIME_EXPORT IMAPConnection : public object
@@ -79,7 +81,7 @@ public:
 	char hierarchySeparator() const;
 
 
-	void send(bool tag, const string& what, bool end);
+	void sendCommand(shared_ptr <IMAPCommand> cmd);
 	void sendRaw(const byte_t* buffer, const size_t count);
 
 	IMAPParser::response* readResponse(IMAPParser::literalHandler* lh = NULL);
@@ -102,6 +104,11 @@ public:
 	shared_ptr <connectionInfos> getConnectionInfos() const;
 
 	shared_ptr <const socket> getSocket() const;
+	void setSocket(shared_ptr <socket> sok);
+
+	shared_ptr <tracer> getTracer();
+
+	shared_ptr <IMAPTag> getTag();
 
 	bool isMODSEQDisabled() const;
 	void disableMODSEQ();
@@ -146,6 +153,8 @@ private:
 	bool m_capabilitiesFetched;
 
 	bool m_noModSeq;
+
+	shared_ptr <tracer> m_tracer;
 
 
 	void internalDisconnect();
