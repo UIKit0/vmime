@@ -46,6 +46,9 @@ void bodyPart::parseImpl
 	size_t pos = position;
 	m_header->parse(ctx, parser, pos, end, &pos);
 
+	if (!ctx.getExtraHeaders().empty())
+		m_header->parse(ctx, ctx.getExtraHeaders());
+
   // Retry with a different default charset
 	if (ctx.getRetryOnCharsetMismatch())
 	{

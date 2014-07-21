@@ -54,9 +54,13 @@ public:
 	bool getEmailAddressOptional() const;
 	void setEmailAddressOptional(bool);
 
+	const std::string& getExtraHeaders() const;
+	void setExtraHeaders(const std::string& );
+
 protected:
 	bool m_retryOnCharsetMismatch;	
 	bool m_emailAddressOptional;	
+	std::string m_extraHeaders;
 };
 
 

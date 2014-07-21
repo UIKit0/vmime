@@ -69,6 +69,13 @@ void parsingContext::setEmailAddressOptional(bool f)
 	m_emailAddressOptional = f;
 }
 
+const std::string& parsingContext::getExtraHeaders() const
+{
+	return m_extraHeaders;
+}
 
-
+void parsingContext::setExtraHeaders(const std::string& s)
+{
+	m_extraHeaders = s;
+}
 } // vmime

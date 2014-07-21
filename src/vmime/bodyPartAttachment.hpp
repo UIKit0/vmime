@@ -56,12 +56,12 @@ public:
 	shared_ptr <const object> getPart() const;
 	shared_ptr <const header> getHeader() const;
 
+	shared_ptr <const contentDispositionField> getContentDisposition() const;
+	shared_ptr <const contentTypeField> getContentType() const;
+
 private:
 
 	void generateIn(shared_ptr <bodyPart> parent) const;
-
-	shared_ptr <const contentDispositionField> getContentDisposition() const;
-	shared_ptr <const contentTypeField> getContentType() const;
 
 
 	shared_ptr <const bodyPart> m_part;
