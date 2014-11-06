@@ -38,7 +38,8 @@
 
 #include "vmime/utility/outputStreamByteArrayAdapter.hpp"
 
-#include "vmime/exception.hpp"
+#include "vmime/security/cert/certificateException.hpp"
+#include "vmime/security/cert/unsupportedCertificateTypeException.hpp"
 
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
@@ -234,7 +235,7 @@ void X509Certificate_OpenSSL::write
 	}
 	else
 	{
-		throw vmime::exceptions::unsupported_certificate_type("Unknown cert type");
+		throw unsupportedCertificateTypeException("Unknown format");
 	}
 
 	return; // #### Early Return ####
@@ -250,7 +251,7 @@ err:
 		char errstr[256];
 		long ec = ERR_get_error();
 		ERR_error_string(ec, errstr);
-		throw vmime::exceptions::certificate_exception(
+		throw certificateException(
 			"OpenSSLX509Certificate_OpenSSL::write exception - " + string(errstr));
 	}
 }
@@ -415,10 +416,10 @@ bool X509Certificate_OpenSSL::verifyHostName
 						CONF_VALUE* cnf = sk_CONF_VALUE_value(val, j);
 
 						if ((strcasecmp(cnf->name, "DNS") == 0 &&
-							 strcasecmp(cnf->value, hostname.c_str()) == 0)
-							 ||
-							(strncasecmp(cnf->name, "IP", 2) == 0 &&
-							 strcasecmp(cnf->value, hostname.c_str()) == 0))
+						     cnMatch(cnf->value, hostname.c_str()))
+						     ||
+						    (strncasecmp(cnf->name, "IP", 2) == 0 &&
+						     cnMatch(cnf->value, hostname.c_str())))
 						{
 							return true;
 						}

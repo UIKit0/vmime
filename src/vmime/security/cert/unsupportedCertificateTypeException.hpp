@@ -21,13 +21,18 @@
 // the GNU General Public License cover the whole combination.
 //
 
-#ifndef VMIME_SECURITY_CERT_CERTIFICATECHAIN_HPP_INCLUDED
-#define VMIME_SECURITY_CERT_CERTIFICATECHAIN_HPP_INCLUDED
+#ifndef VMIME_SECURITY_CERT_UNSUPPORTEDCERTIFICATETYPEEXCEPTION_HPP_INCLUDED
+#define VMIME_SECURITY_CERT_UNSUPPORTEDCERTIFICATETYPEEXCEPTION_HPP_INCLUDED
 
 
-#include "vmime/types.hpp"
+#include "vmime/config.hpp"
+
+
+#if VMIME_HAVE_MESSAGING_FEATURES && VMIME_HAVE_TLS_SUPPORT
+
 
 #include "vmime/security/cert/certificate.hpp"
+#include "vmime/security/cert/certificateException.hpp"
 
 
 namespace vmime {
@@ -35,38 +40,25 @@ namespace security {
 namespace cert {
 
 
-/** An ordered list of certificates, from the subject certificate to
-  * the issuer certificate.
+/** Thrown when a certificate is of unsupported format.
   */
-class VMIME_EXPORT certificateChain : public object
+class VMIME_EXPORT unsupportedCertificateTypeException : public certificateException
 {
 public:
 
-	/** Construct a new certificateChain object given an ordered list
-	  * of certificates.
+	/** Constructs a unsupportedCertificateTypeException.
 	  *
-	  * @param certs chain of certificates
+	  * @param type certificate type
 	  */
-	certificateChain(const std::vector <shared_ptr <certificate> >& certs);
+	unsupportedCertificateTypeException(const string& type);
 
-	/** Return the number of certificates in the chain.
-	  *
-	  * @return number of certificates in the chain
-	  */
-	size_t getCount() const;
+	~unsupportedCertificateTypeException() throw();
 
-	/** Return the certificate at the specified position. 0 is the
-	  * subject certificate, 1 is the issuer's certificate, 2 is
-	  * the issuer's issuer, etc.
-	  *
-	  * @param index position at which to retrieve certificate
-	  * @return certificate at the specified position
-	  */
-	shared_ptr <certificate> getAt(const size_t index);
+	exception* clone() const;
 
-protected:
+private:
 
-	std::vector <shared_ptr <certificate> > m_certs;
+	string m_type;
 };
 
 
@@ -75,5 +67,6 @@ protected:
 } // vmime
 
 
-#endif // VMIME_SECURITY_CERT_CERTIFICATECHAIN_HPP_INCLUDED
+#endif // VMIME_HAVE_MESSAGING_FEATURES && VMIME_HAVE_TLS_SUPPORT
 
+#endif // VMIME_SECURITY_CERT_UNSUPPORTEDCERTIFICATETYPEEXCEPTION_HPP_INCLUDED

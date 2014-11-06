@@ -21,13 +21,18 @@
 // the GNU General Public License cover the whole combination.
 //
 
-#ifndef VMIME_SECURITY_CERT_CERTIFICATECHAIN_HPP_INCLUDED
-#define VMIME_SECURITY_CERT_CERTIFICATECHAIN_HPP_INCLUDED
+#ifndef VMIME_SECURITY_CERT_SERVERIDENTITYEXCEPTION_HPP_INCLUDED
+#define VMIME_SECURITY_CERT_SERVERIDENTITYEXCEPTION_HPP_INCLUDED
 
 
-#include "vmime/types.hpp"
+#include "vmime/config.hpp"
+
+
+#if VMIME_HAVE_MESSAGING_FEATURES && VMIME_HAVE_TLS_SUPPORT
+
 
 #include "vmime/security/cert/certificate.hpp"
+#include "vmime/security/cert/certificateException.hpp"
 
 
 namespace vmime {
@@ -35,38 +40,18 @@ namespace security {
 namespace cert {
 
 
-/** An ordered list of certificates, from the subject certificate to
-  * the issuer certificate.
+/** Thrown when the subject name of a certificate does not match
+  * the hostname of the server.
   */
-class VMIME_EXPORT certificateChain : public object
+class VMIME_EXPORT serverIdentityException : public certificateException
 {
 public:
 
-	/** Construct a new certificateChain object given an ordered list
-	  * of certificates.
-	  *
-	  * @param certs chain of certificates
+	/** Constructs a serverIdentityException with no detail message.
 	  */
-	certificateChain(const std::vector <shared_ptr <certificate> >& certs);
+	serverIdentityException();
 
-	/** Return the number of certificates in the chain.
-	  *
-	  * @return number of certificates in the chain
-	  */
-	size_t getCount() const;
-
-	/** Return the certificate at the specified position. 0 is the
-	  * subject certificate, 1 is the issuer's certificate, 2 is
-	  * the issuer's issuer, etc.
-	  *
-	  * @param index position at which to retrieve certificate
-	  * @return certificate at the specified position
-	  */
-	shared_ptr <certificate> getAt(const size_t index);
-
-protected:
-
-	std::vector <shared_ptr <certificate> > m_certs;
+	exception* clone() const;
 };
 
 
@@ -75,5 +60,6 @@ protected:
 } // vmime
 
 
-#endif // VMIME_SECURITY_CERT_CERTIFICATECHAIN_HPP_INCLUDED
+#endif // VMIME_HAVE_MESSAGING_FEATURES && VMIME_HAVE_TLS_SUPPORT
 
+#endif // VMIME_SECURITY_CERT_SERVERIDENTITYEXCEPTION_HPP_INCLUDED

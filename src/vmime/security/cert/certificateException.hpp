@@ -21,13 +21,19 @@
 // the GNU General Public License cover the whole combination.
 //
 
-#ifndef VMIME_SECURITY_CERT_CERTIFICATECHAIN_HPP_INCLUDED
-#define VMIME_SECURITY_CERT_CERTIFICATECHAIN_HPP_INCLUDED
+#ifndef VMIME_SECURITY_CERT_CERTIFICATEEXCEPTION_HPP_INCLUDED
+#define VMIME_SECURITY_CERT_CERTIFICATEEXCEPTION_HPP_INCLUDED
 
 
-#include "vmime/types.hpp"
+#include "vmime/config.hpp"
+
+
+#if VMIME_HAVE_MESSAGING_FEATURES && VMIME_HAVE_TLS_SUPPORT
+
 
 #include "vmime/security/cert/certificate.hpp"
+
+#include "vmime/exception.hpp"
 
 
 namespace vmime {
@@ -35,38 +41,41 @@ namespace security {
 namespace cert {
 
 
-/** An ordered list of certificates, from the subject certificate to
-  * the issuer certificate.
+/** Thrown to indicate a problem with a certificate or certificate verification.
   */
-class VMIME_EXPORT certificateChain : public object
+class VMIME_EXPORT certificateException : public exception
 {
 public:
 
-	/** Construct a new certificateChain object given an ordered list
-	  * of certificates.
-	  *
-	  * @param certs chain of certificates
+	/** Constructs a certificateException with no detail message.
 	  */
-	certificateChain(const std::vector <shared_ptr <certificate> >& certs);
+	certificateException();
 
-	/** Return the number of certificates in the chain.
+	/** Constructs a certificateException with a detail message.
 	  *
-	  * @return number of certificates in the chain
+	  * @param what a message that describes this exception
 	  */
-	size_t getCount() const;
+	certificateException(const std::string& what);
 
-	/** Return the certificate at the specified position. 0 is the
-	  * subject certificate, 1 is the issuer's certificate, 2 is
-	  * the issuer's issuer, etc.
+	~certificateException() throw();
+
+	exception* clone() const;
+
+	/** Sets the certificate on which the problem occured.
 	  *
-	  * @param index position at which to retrieve certificate
-	  * @return certificate at the specified position
+	  * @param cert certificate
 	  */
-	shared_ptr <certificate> getAt(const size_t index);
+	void setCertificate(shared_ptr <certificate> cert);
 
-protected:
+	/** Returns the certificate on which the problem occured.
+	  *
+	  * @return certificate
+	  */
+	shared_ptr <certificate> getCertificate();
 
-	std::vector <shared_ptr <certificate> > m_certs;
+private:
+
+	shared_ptr <certificate> m_cert;
 };
 
 
@@ -75,5 +84,6 @@ protected:
 } // vmime
 
 
-#endif // VMIME_SECURITY_CERT_CERTIFICATECHAIN_HPP_INCLUDED
+#endif // VMIME_HAVE_MESSAGING_FEATURES && VMIME_HAVE_TLS_SUPPORT
 
+#endif // VMIME_SECURITY_CERT_CERTIFICATEEXCEPTION_HPP_INCLUDED
